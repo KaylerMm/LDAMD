@@ -15,13 +15,6 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Rate limiting - DESABILITADO PARA TESTES
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 1000 // limit each IP to 1000 requests per windowMs
-// });
-// app.use(limiter); // Comentado para permitir testes intensivos
-
 // Validation schemas
 const listSchema = Joi.object({
   name: Joi.string().min(1).max(100).required(),
@@ -50,8 +43,6 @@ const updateItemSchema = Joi.object({
   purchased: Joi.boolean(),
   notes: Joi.string().max(200)
 });
-
-// Authentication middleware (verifies token with user service)
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -214,7 +205,6 @@ app.put('/lists/:id', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -238,7 +228,6 @@ app.put('/lists/:id', authenticateToken, async (req, res) => {
 });
 app.delete('/lists/:id', authenticateToken, (req, res) => {
   try {
-    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -271,7 +260,6 @@ app.post('/lists/:id/items', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -334,7 +322,6 @@ app.put('/lists/:id/items/:itemId', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -378,7 +365,6 @@ app.put('/lists/:id/items/:itemId', authenticateToken, async (req, res) => {
 // Remove item from list
 app.delete('/lists/:id/items/:itemId', authenticateToken, (req, res) => {
   try {
-    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -471,35 +457,25 @@ app.get('/stats', authenticateToken, (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
-
-// Start server
 const server = app.listen(PORT, () => {
   console.log(`List Service running on port ${PORT}`);
   
-  // Register service with service registry
+
   registerService('list-service', 'localhost', PORT, {
     description: 'Shopping list management service',
     version: '1.0.0'
   });
-
-  // Send periodic heartbeats
   setInterval(() => {
     sendHeartbeat('list-service');
   }, 30000); // Every 30 seconds
 });
-
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down List Service...');
   server.close(() => {

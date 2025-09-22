@@ -19,7 +19,6 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Validation schemas
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
   username: Joi.string().alphanum().min(3).max(30).required(),
@@ -122,8 +121,6 @@ app.post('/auth/register', async (req, res) => {
 
    
     const { password: _, ...userResponse } = user;
-
-    // Generate token
     const token = generateToken(user);
 
     res.status(201).json({
@@ -145,8 +142,6 @@ app.post('/auth/login', async (req, res) => {
     }
 
     const { email, username, password } = value;
-
-    // Find user by email or username
     let user;
     if (email) {
       user = db.findOne('users', { email });
@@ -157,8 +152,6 @@ app.post('/auth/login', async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
-
-    // Verify password
     const isPasswordValid = await comparePassword(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -166,8 +159,6 @@ app.post('/auth/login', async (req, res) => {
 
    
     const { password: _, ...userResponse } = user;
-
-    // Generate token
     const token = generateToken(user);
 
     res.json({
@@ -180,13 +171,11 @@ app.post('/auth/login', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Get user by ID
 app.get('/users/:id', authenticateToken, (req, res) => {
   try {
     const userId = req.params.id;
     
-    // Users can only access their own data or admin can access any
+
     if (req.user.id !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -204,13 +193,11 @@ app.get('/users/:id', authenticateToken, (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Update user
 app.put('/users/:id', authenticateToken, async (req, res) => {
   try {
     const userId = req.params.id;
     
-    // Users can only update their own data
+
     if (req.user.id !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
@@ -226,8 +213,6 @@ app.put('/users/:id', authenticateToken, async (req, res) => {
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    // Check for email/username conflicts (if being updated)
     if (value.email && value.email !== existingUser.email) {
       const emailExists = db.findOne('users', { email: value.email });
       if (emailExists) {
@@ -241,8 +226,6 @@ app.put('/users/:id', authenticateToken, async (req, res) => {
         return res.status(409).json({ error: 'Username already in use' });
       }
     }
-
-    // Update user
     const updatedUser = db.update('users', userId, value);
 
    
@@ -257,8 +240,6 @@ app.put('/users/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Verify token endpoint (for other services)
 app.post('/auth/verify', (req, res) => {
   const { token } = req.body;
 
@@ -274,8 +255,6 @@ app.post('/auth/verify', (req, res) => {
     res.json({ valid: true, user });
   });
 });
-
-// Get all users (admin only - for development/testing)
 app.get('/users', authenticateToken, (req, res) => {
   try {
     const users = db.findAll('users').map(user => {
@@ -289,35 +268,25 @@ app.get('/users', authenticateToken, (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
-
-// Start server
 const server = app.listen(PORT, () => {
   console.log(`User Service running on port ${PORT}`);
   
-  // Register service with service registry
+
   registerService('user-service', 'localhost', PORT, {
     description: 'User management and authentication service',
     version: '1.0.0'
   });
-
-  // Send periodic heartbeats
   setInterval(() => {
     sendHeartbeat('user-service');
-  }, 30000); // Every 30 seconds
+  }, 30000);
 });
-
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down User Service...');
   server.close(() => {

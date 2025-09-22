@@ -17,7 +17,6 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Validation schemas
 const itemSchema = Joi.object({
   name: Joi.string().min(1).max(100).required(),
   category: Joi.string().valid('Alimentos', 'Limpeza', 'Higiene', 'Bebidas', 'Padaria').required(),
@@ -39,8 +38,6 @@ const updateItemSchema = Joi.object({
   description: Joi.string().max(500),
   active: Joi.boolean()
 });
-
-// Authentication middleware (verifies token with user service)
 const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
@@ -69,15 +66,13 @@ const authenticateToken = async (req, res, next) => {
     res.status(403).json({ error: 'Authentication failed' });
   }
 };
-
-// Seed initial data
 const seedInitialData = () => {
   const items = db.findAll('items');
   if (items.length === 0) {
     console.log('Seeding initial items data...');
     
     const initialItems = [
-      // Alimentos
+
       { name: 'Arroz Branco', category: 'Alimentos', brand: 'Tio João', unit: 'kg', averagePrice: 4.50, barcode: '7891234567890', description: 'Arroz branco tipo 1' },
       { name: 'Feijão Preto', category: 'Alimentos', brand: 'Camil', unit: 'kg', averagePrice: 6.80, barcode: '7891234567891', description: 'Feijão preto premium' },
       { name: 'Açúcar Cristal', category: 'Alimentos', brand: 'União', unit: 'kg', averagePrice: 3.20, barcode: '7891234567892', description: 'Açúcar cristal refinado' },
@@ -87,21 +82,21 @@ const seedInitialData = () => {
       { name: 'Ovos', category: 'Alimentos', brand: 'Korin', unit: 'caixa', averagePrice: 8.50, barcode: '7891234567896', description: 'Ovos brancos 12 unidades' },
       { name: 'Banana Prata', category: 'Alimentos', brand: '', unit: 'kg', averagePrice: 4.90, barcode: '', description: 'Banana prata fresca' },
       
-      // Limpeza
+
       { name: 'Detergente Líquido', category: 'Limpeza', brand: 'Ypê', unit: 'un', averagePrice: 2.80, barcode: '7891234567897', description: 'Detergente neutro 500ml' },
       { name: 'Água Sanitária', category: 'Limpeza', brand: 'Candida', unit: 'litro', averagePrice: 3.50, barcode: '7891234567898', description: 'Água sanitária 1L' },
       { name: 'Sabão em Pó', category: 'Limpeza', brand: 'Omo', unit: 'caixa', averagePrice: 12.90, barcode: '7891234567899', description: 'Sabão em pó 1kg' },
       { name: 'Desinfetante', category: 'Limpeza', brand: 'Pinho Sol', unit: 'litro', averagePrice: 6.20, barcode: '7891234567800', description: 'Desinfetante pinho 1L' },
       { name: 'Esponja de Aço', category: 'Limpeza', brand: 'Bombril', unit: 'pacote', averagePrice: 3.80, barcode: '7891234567801', description: 'Esponja de aço 8 unidades' },
       
-      // Higiene
+
       { name: 'Pasta de Dente', category: 'Higiene', brand: 'Colgate', unit: 'un', averagePrice: 4.50, barcode: '7891234567802', description: 'Pasta de dente Total 12 90g' },
       { name: 'Shampoo', category: 'Higiene', brand: 'Pantene', unit: 'un', averagePrice: 12.90, barcode: '7891234567803', description: 'Shampoo hidratação 400ml' },
       { name: 'Sabonete', category: 'Higiene', brand: 'Dove', unit: 'un', averagePrice: 2.80, barcode: '7891234567804', description: 'Sabonete hidratante 90g' },
       { name: 'Papel Higiênico', category: 'Higiene', brand: 'Neve', unit: 'pacote', averagePrice: 8.90, barcode: '7891234567805', description: 'Papel higiênico folha dupla 4 rolos' },
       { name: 'Desodorante', category: 'Higiene', brand: 'Rexona', unit: 'un', averagePrice: 7.80, barcode: '7891234567806', description: 'Desodorante aerosol 150ml' },
       
-      // Bebidas
+
       { name: 'Refrigerante Cola', category: 'Bebidas', brand: 'Coca-Cola', unit: 'litro', averagePrice: 6.50, barcode: '7891234567807', description: 'Refrigerante cola 2L' },
       { name: 'Suco de Laranja', category: 'Bebidas', brand: 'Tang', unit: 'pacote', averagePrice: 3.20, barcode: '7891234567808', description: 'Suco em pó sabor laranja' },
       { name: 'Água Mineral', category: 'Bebidas', brand: 'Crystal', unit: 'litro', averagePrice: 2.10, barcode: '7891234567809', description: 'Água mineral sem gás 1,5L' },
@@ -129,7 +124,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Get all categories
 app.get('/categories', (req, res) => {
   try {
     const categories = ['Alimentos', 'Limpeza', 'Higiene', 'Bebidas', 'Padaria'];
@@ -140,7 +134,6 @@ app.get('/categories', (req, res) => {
   }
 });
 
-// Get all items with filters
 app.get('/items', (req, res) => {
   try {
     const { category, name, active = 'true', page = 1, limit = 50 } = req.query;
@@ -186,7 +179,6 @@ app.get('/items', (req, res) => {
   }
 });
 
-// Search items by name
 app.get('/search', (req, res) => {
   try {
     const { q, limit = 20 } = req.query;
@@ -301,8 +293,6 @@ app.put('/items/:id', authenticateToken, async (req, res) => {
     if (!existingItem) {
       return res.status(404).json({ error: 'Item not found' });
     }
-
-    // Check for name/brand conflicts (if being updated)
     if ((value.name || value.brand !== undefined) && 
         (value.name !== existingItem.name || value.brand !== existingItem.brand)) {
       
@@ -346,38 +336,28 @@ app.post('/items/bulk', (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
-
-// Start server
 const server = app.listen(PORT, () => {
   console.log(`Item Service running on port ${PORT}`);
   
   // Seed initial data
   seedInitialData();
   
-  // Register service with service registry
+
   registerService('item-service', 'localhost', PORT, {
     description: 'Item catalog and product management service',
     version: '1.0.0'
   });
-
-  // Send periodic heartbeats
   setInterval(() => {
     sendHeartbeat('item-service');
   }, 30000); // Every 30 seconds
 });
-
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down Item Service...');
   server.close(() => {

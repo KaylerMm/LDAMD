@@ -336,14 +336,10 @@ app.get('/api/circuit-breakers', (req, res) => {
   const states = Object.values(circuitBreakers).map(cb => cb.getState());
   res.json({ circuitBreakers: states });
 });
-
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Gateway error:', err);
   res.status(500).json({ error: 'Gateway error', details: err.message });
 });
-
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ 
     error: 'Endpoint not found',
@@ -369,8 +365,6 @@ const performHealthChecks = async () => {
     console.error('Health check error:', error);
   }
 };
-
-// Start server
 const server = app.listen(PORT, () => {
   console.log(`API Gateway running on port ${PORT}`);
   
@@ -383,13 +377,11 @@ const server = app.listen(PORT, () => {
   // Start health checking
   setInterval(performHealthChecks, 30000); // Every 30 seconds
   
-  // Send periodic heartbeats
+
   setInterval(() => {
     sendHeartbeat('api-gateway');
   }, 30000);
 });
-
-// Graceful shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down API Gateway...');
   server.close(() => {
