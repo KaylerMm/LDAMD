@@ -1,0 +1,32 @@
+{
+  "name": "lista-compras-microservices",
+  "version": "1.0.0",
+  "description": "Sistema distribuído para gerenciamento de listas de compras",
+  "main": "index.js",
+  "scripts": {
+    "install:all": "npm install && cd services/user-service && npm install && cd ../item-service && npm install && cd ../list-service && npm install && cd ../../api-gateway && npm install",
+    "start": "./start-all.sh",
+    "start:user": "cd services/user-service && npm start",
+    "start:item": "cd services/item-service && npm start",
+    "start:list": "cd services/list-service && npm start",
+    "start:gateway": "cd api-gateway && npm start",
+    "demo": "node client-demo-simple.js",
+    "test": "./teste-completo.sh",
+    "test-simple": "npm run health && npm run registry && npm run demo",
+    "health": "curl -s http://localhost:3000/health | jq '.' || curl http://localhost:3000/health",
+    "registry": "curl -s http://localhost:3000/registry | jq '.' || curl http://localhost:3000/registry",
+    "status": "echo '🔍 Service Status:' && curl -s http://localhost:3000/health | jq '.services[]' || echo 'Services not available'",
+    "dev:user": "cd services/user-service && npm run dev",
+    "dev:item": "cd services/item-service && npm run dev", 
+    "dev:list": "cd services/list-service && npm run dev",
+    "dev:gateway": "cd api-gateway && npm run dev",
+    "clean": "rm -rf data/ node_modules/ services/*/node_modules api-gateway/node_modules",
+    "logs": "tail -f data/service-registry.json || echo 'No logs available yet'"
+  },
+  "keywords": ["microservices", "shopping", "list", "nodejs"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.5.0"
+  }
+}
