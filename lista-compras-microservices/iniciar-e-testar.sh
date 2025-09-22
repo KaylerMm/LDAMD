@@ -109,7 +109,7 @@ echo "================================="
 
 # Executar o teste CRUD
 cd /home/kayler/Documents/PUC/LDAMD/lista-compras-microservices
-./teste-crud-completo.sh
+./teste-crud-direto.sh
 
 echo ""
 echo "✅ Teste concluído!"
