@@ -2,6 +2,9 @@
 
 Sistema distribuído para gerenciamento de listas de compras utilizando arquitetura de microsserviços com API Gateway, Service Discovery e bancos NoSQL independentes.
 
+# LINK VÍDEO APRESENTAÇÃO:
+https://drive.google.com/file/d/1mzml25R62klK55zOWdSr7mGlWhCRsKkJ/view?usp=drive_link
+
 ## 🏗️ Arquitetura
 
 ### Microsserviços
