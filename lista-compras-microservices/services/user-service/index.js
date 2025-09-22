@@ -3,11 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const Joi = require('joi');
 const path = require('path');
 
-// Shared modules
 const JsonDatabase = require('../../shared/JsonDatabase');
 const { registerService, sendHeartbeat } = require('../../shared/serviceRegistry');
 
@@ -15,20 +13,11 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// Database setup
 const db = new JsonDatabase(path.join(__dirname, '../../data/users.json'));
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-
-// Rate limiting - DESABILITADO PARA TESTES
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 1000 // limit each IP to 1000 requests per windowMs (mais alto para testes)
-// });
-// app.use(limiter); // Comentado para permitir testes intensivos
 
 // Validation schemas
 const registerSchema = Joi.object({
@@ -60,7 +49,6 @@ const updateUserSchema = Joi.object({
   })
 });
 
-// Middleware for JWT authentication
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -77,8 +65,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-// Helper functions
 const generateToken = (user) => {
   const payload = {
     id: user.id,
@@ -95,10 +81,6 @@ const hashPassword = async (password) => {
 const comparePassword = async (password, hash) => {
   return await bcrypt.compare(password, hash);
 };
-
-// Routes
-
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
@@ -108,10 +90,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Register user
 app.post('/auth/register', async (req, res) => {
   try {
-    // Validate request
     const { error, value } = registerSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
@@ -119,16 +99,13 @@ app.post('/auth/register', async (req, res) => {
 
     const { email, username, password, firstName, lastName, preferences } = value;
 
-    // Check if user already exists
     const existingUser = db.findOne('users', { email }) || db.findOne('users', { username });
     if (existingUser) {
       return res.status(409).json({ error: 'User with this email or username already exists' });
     }
-
-    // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // Create user
+   
     const userData = {
       email,
       username,
@@ -143,7 +120,7 @@ app.post('/auth/register', async (req, res) => {
 
     const user = db.create('users', userData);
 
-    // Remove password from response
+   
     const { password: _, ...userResponse } = user;
 
     // Generate token
@@ -159,11 +136,9 @@ app.post('/auth/register', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Login user
 app.post('/auth/login', async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = loginSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
@@ -189,7 +164,7 @@ app.post('/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Remove password from response
+   
     const { password: _, ...userResponse } = user;
 
     // Generate token
@@ -221,7 +196,7 @@ app.get('/users/:id', authenticateToken, (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Remove password from response
+   
     const { password, ...userResponse } = user;
     res.json(userResponse);
   } catch (error) {
@@ -240,13 +215,13 @@ app.put('/users/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Validate request
+   
     const { error, value } = updateUserSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if user exists
+   
     const existingUser = db.findById('users', userId);
     if (!existingUser) {
       return res.status(404).json({ error: 'User not found' });
@@ -270,7 +245,7 @@ app.put('/users/:id', authenticateToken, async (req, res) => {
     // Update user
     const updatedUser = db.update('users', userId, value);
 
-    // Remove password from response
+   
     const { password, ...userResponse } = updatedUser;
 
     res.json({

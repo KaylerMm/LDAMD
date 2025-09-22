@@ -5,18 +5,12 @@ const rateLimit = require('express-rate-limit');
 const Joi = require('joi');
 const path = require('path');
 const axios = require('axios');
-
-// Shared modules
 const JsonDatabase = require('../../shared/JsonDatabase');
 const { registerService, sendHeartbeat, discoverService } = require('../../shared/serviceRegistry');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
-
-// Database setup
 const db = new JsonDatabase(path.join(__dirname, '../../data/lists.json'));
-
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -67,7 +61,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Access token required' });
     }
 
-    // Verify token with user service
+   
     const userService = discoverService('user-service');
     if (!userService) {
       return res.status(503).json({ error: 'User service unavailable' });
@@ -116,10 +110,6 @@ const getItemDetails = async (itemId) => {
     return null;
   }
 };
-
-// Routes
-
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
@@ -132,7 +122,7 @@ app.get('/health', (req, res) => {
 // Create new list
 app.post('/lists', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = listSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
@@ -216,17 +206,15 @@ app.get('/lists/:id', authenticateToken, (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Update list
 app.put('/lists/:id', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = updateListSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if list exists and belongs to user
+    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -248,11 +236,9 @@ app.put('/lists/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-// Delete list
 app.delete('/lists/:id', authenticateToken, (req, res) => {
   try {
-    // Check if list exists and belongs to user
+    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -279,13 +265,13 @@ app.delete('/lists/:id', authenticateToken, (req, res) => {
 // Add item to list
 app.post('/lists/:id/items', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = addItemSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if list exists and belongs to user
+    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -342,13 +328,13 @@ app.post('/lists/:id/items', authenticateToken, async (req, res) => {
 // Update item in list
 app.put('/lists/:id/items/:itemId', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = updateItemSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if list exists and belongs to user
+    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });
@@ -392,7 +378,7 @@ app.put('/lists/:id/items/:itemId', authenticateToken, async (req, res) => {
 // Remove item from list
 app.delete('/lists/:id/items/:itemId', authenticateToken, (req, res) => {
   try {
-    // Check if list exists and belongs to user
+    and belongs to user
     const existingList = db.findById('lists', req.params.id);
     if (!existingList) {
       return res.status(404).json({ error: 'List not found' });

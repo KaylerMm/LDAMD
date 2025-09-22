@@ -5,14 +5,10 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const morgan = require('morgan');
 const axios = require('axios');
-
-// Shared modules
 const { registerService, sendHeartbeat, getRegistry, discoverService } = require('../shared/serviceRegistry');
 
 const app = express();
 const PORT = process.env.PORT || 3005;
-
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
@@ -136,8 +132,6 @@ const createCircuitBreakerProxy = (serviceName, pathRewrite = {}) => {
     }
   };
 };
-
-// Routes
 
 // Health check endpoint
 app.get('/health', async (req, res) => {

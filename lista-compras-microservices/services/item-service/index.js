@@ -1,32 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const Joi = require('joi');
 const path = require('path');
 const axios = require('axios');
 
-// Shared modules
 const JsonDatabase = require('../../shared/JsonDatabase');
 const { registerService, sendHeartbeat, discoverService } = require('../../shared/serviceRegistry');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 
-// Database setup
 const db = new JsonDatabase(path.join(__dirname, '../../data/items.json'));
 
-// Middleware
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-
-// Rate limiting - DESABILITADO PARA TESTES
-// const limiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 1000 // limit each IP to 1000 requests per windowMs
-// });
-// app.use(limiter); // Comentado para permitir testes intensivos
 
 // Validation schemas
 const itemSchema = Joi.object({
@@ -61,7 +50,7 @@ const authenticateToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Access token required' });
     }
 
-    // Verify token with user service
+   
     const userService = discoverService('user-service');
     if (!userService) {
       return res.status(503).json({ error: 'User service unavailable' });
@@ -131,10 +120,6 @@ const seedInitialData = () => {
     console.log(`Seeded ${initialItems.length} initial items`);
   }
 };
-
-// Routes
-
-// Health check
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
@@ -273,13 +258,13 @@ app.get('/items/:id', (req, res) => {
 // Create new item (requires authentication)
 app.post('/items', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = itemSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if item with same name and brand already exists
+   
     const existingItem = db.findOne('items', { 
       name: value.name, 
       brand: value.brand || '' 
@@ -305,13 +290,13 @@ app.post('/items', authenticateToken, async (req, res) => {
 // Update item (requires authentication)
 app.put('/items/:id', authenticateToken, async (req, res) => {
   try {
-    // Validate request
+   
     const { error, value } = updateItemSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Check if item exists
+   
     const existingItem = db.findById('items', req.params.id);
     if (!existingItem) {
       return res.status(404).json({ error: 'Item not found' });
